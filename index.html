@@ -4,528 +4,327 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mots Croisés</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --gold: #D4A843;
-    --gold-light: #F0C96A;
-    --gold-dark: #A07820;
-    --bg: #F5F0E8;
-    --paper: #FDFAF4;
-    --ink: #1A1A2E;
-    --ink-light: #4A4A6A;
-    --correct: #4CAF50;
-    --wrong: #E53935;
-    --S: 38px;
-    --G: 3px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Lato', sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  header {
-    background: var(--ink);
-    color: var(--gold);
-    text-align: center;
-    padding: 16px 16px 12px;
-    position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 2px 12px rgba(0,0,0,.3);
-  }
-  header h1 { font-family:'Playfair Display',serif; font-size:1.5rem; letter-spacing:.05em; }
-  header p  { font-size:.72rem; color:#aaa; margin-top:3px; letter-spacing:.08em; text-transform:uppercase; }
-
-  .tabs { display:flex; background:var(--ink); border-top:1px solid #333; }
-  .tab {
-    flex:1; padding:10px 0; text-align:center;
-    font-size:.76rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-    color:#888; cursor:pointer; transition:all .2s;
-    border-bottom:3px solid transparent;
-  }
-  .tab.active { color:var(--gold); border-bottom-color:var(--gold); }
-
-  .panel { display:none; padding:14px; }
-  .panel.active { display:block; }
-
-  /* ── GRID ── */
-  #panel-grid { padding:12px 8px; }
-  .grid-scroll { overflow-x:auto; overflow-y:auto; padding-bottom:4px; }
-  .grid-area { position:relative; margin:0 auto; }
-
-  .cell {
-    position:absolute;
-    width:var(--S); height:var(--S);
-    border:1.5px solid #bbb;
-    background:var(--paper);
-    border-radius:3px;
-    cursor:pointer;
-    -webkit-tap-highlight-color:transparent;
-    transition: background .12s;
-  }
-  .cell.gold         { background:var(--gold-light); border-color:var(--gold-dark); }
-  .cell.highlighted  { background:rgba(212,168,67,.25); }
-  .cell.gold.highlighted { background:var(--gold); }
-  .cell.active-cell  { background:var(--ink) !important; border-color:var(--ink); }
-  .cell.correct      { background:rgba(76,175,80,.28) !important; border-color:var(--correct); }
-  .cell.wrong        { background:rgba(229,57,53,.2) !important; border-color:var(--wrong); }
-  .cell.gold.correct { background:rgba(76,175,80,.5) !important; }
-  .cell.gold.wrong   { background:rgba(229,57,53,.38) !important; }
-
-  .cell-number {
-    position:absolute; top:1px; left:2px;
-    font-size:9px; font-weight:700; color:var(--ink-light);
-    line-height:1; pointer-events:none; z-index:2;
-  }
-  .cell.active-cell .cell-number { color:#aaa; }
-
-  .cell input {
-    position:absolute; inset:0;
-    width:100%; height:100%;
-    border:none; background:transparent;
-    text-align:center;
-    font-family:'Playfair Display',serif;
-    font-size:1.1rem; font-weight:700;
-    color:var(--ink);
-    text-transform:uppercase;
-    outline:none; cursor:pointer;
-    caret-color:transparent;
-    padding:0;
-    -webkit-user-select:none; user-select:none;
-  }
-  .cell.active-cell input { color:var(--gold); }
-
-  .progress-wrap { background:#ddd; border-radius:99px; height:6px; margin:0 0 4px; overflow:hidden; }
-  .progress-bar  { height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-dark)); border-radius:99px; transition:width .4s; width:0%; }
-  .progress-label{ font-size:.72rem; color:var(--ink-light); text-align:right; margin-bottom:10px; }
-
-  .btn-row { display:flex; gap:8px; justify-content:center; margin:14px 0 6px; flex-wrap:wrap; }
-  .btn {
-    padding:10px 20px; border-radius:24px; border:none;
-    font-family:'Lato',sans-serif; font-weight:700; font-size:.8rem;
-    letter-spacing:.06em; text-transform:uppercase; cursor:pointer;
-    transition:all .18s; -webkit-tap-highlight-color:transparent;
-  }
-  .btn-primary  { background:var(--ink); color:var(--gold); }
-  .btn-primary:active { transform:scale(.95); }
-  .btn-outline  { background:transparent; color:var(--ink); border:2px solid var(--ink); }
-  .btn-outline:active { background:var(--ink); color:var(--gold); }
-
-  .success-banner {
-    display:none; background:linear-gradient(135deg,var(--gold),var(--gold-dark));
-    color:var(--ink); text-align:center; padding:14px; border-radius:10px;
-    margin:10px 0; font-family:'Playfair Display',serif; font-size:1.05rem;
-    animation: pop .4s ease;
-  }
-  @keyframes pop { 0%{transform:scale(.8);opacity:0} 70%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
-
-  /* ── MYSTERY ── */
-  .mystery-section {
-    background:var(--paper); border-radius:12px; padding:16px;
-    margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.08);
-  }
-  .mystery-section h3 {
-    font-family:'Playfair Display',serif; color:var(--gold-dark);
-    font-size:1.05rem; margin-bottom:12px; text-align:center;
-  }
-  .mystery-cells { display:flex; justify-content:center; gap:5px; flex-wrap:wrap; }
-  .mystery-cell {
-    width:32px; height:42px;
-    border:2px solid var(--gold); background:var(--gold-light);
-    border-radius:5px; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:2px;
-  }
-  .mystery-letter {
-    font-family:'Playfair Display',serif; font-size:1.1rem;
-    font-weight:700; color:var(--ink); min-height:1.2em; line-height:1;
-  }
-  .mystery-num { font-size:.62rem; font-weight:700; color:var(--gold-dark); }
-
-  /* ── VIRTUAL KEYBOARD ── */
-  .keyboard {
-    position:fixed; bottom:0; left:0; right:0;
-    background:#1A1A2E; padding:8px 4px 10px;
-    display:none; z-index:200;
-    box-shadow:0 -4px 16px rgba(0,0,0,.4);
-  }
-  .keyboard.visible { display:block; }
-  .kb-row { display:flex; justify-content:center; gap:4px; margin-bottom:4px; }
-  .kb-key {
-    min-width:29px; height:40px; padding:0 5px;
-    border-radius:6px; background:#2E2E4E; color:#eee;
-    border:none; font-family:'Lato',sans-serif; font-weight:700; font-size:.85rem;
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; transition:background .1s;
-    -webkit-tap-highlight-color:transparent; user-select:none;
-  }
-  .kb-key:active { background:var(--gold); color:var(--ink); }
-  .kb-key.special { min-width:50px; background:#3E3E5E; font-size:.7rem; }
-  .kb-key.close-kb { background:#444; }
-  body.kb-open { padding-bottom:132px; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100dvh;padding-bottom:168px}
+.hdr{position:sticky;top:0;z-index:50;background:#0f172a;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.hdr-title{text-align:center;padding:10px 16px 8px;font-size:14px;font-weight:800;letter-spacing:4px;color:#fff;border-bottom:1px solid #1e293b}
+.clue-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:48px}
+.cbadge{background:#fbbf24;color:#0f172a;font-weight:800;padding:3px 8px;border-radius:4px;font-size:12px;white-space:nowrap;flex-shrink:0}
+.ctxt{font-size:12.5px;line-height:1.4;color:#cbd5e1}
+.cph{color:#475569;font-style:italic;font-size:12px}
+.grid-area{overflow-x:auto;padding:14px 12px;-webkit-overflow-scrolling:touch}
+.cw-grid{display:inline-grid;gap:1.5px;background:#0f172a;border:2px solid #0f172a;border-radius:3px}
+.gc{width:36px;height:36px;background:#0f172a;position:relative}
+.gc.on{background:#fff;cursor:pointer}
+.gc.on.yi{background:#FFE500}
+.gc.on.hi{background:#bfdbfe}
+.gc.on.yhi{background:#d4c400}
+.gc.on.ok{background:#86efac}
+.gc.on.ko{background:#fca5a5}
+.gc.on.sel{background:#2563eb}
+.nl{position:absolute;top:1px;left:2px;font-size:7px;font-weight:800;line-height:1;color:#374151;pointer-events:none;z-index:2}
+.gc.on.sel .nl{color:rgba(255,255,255,.75)}
+.lt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#111827;pointer-events:none;z-index:3}
+.gc.on.sel .lt{color:#fff}
+.gc.on.ok .lt{color:#065f46}
+.gc.on.ko .lt{color:#991b1b}
+#success{display:none;margin:0 12px 14px;background:#d1fae5;border:2px solid #6ee7b7;border-radius:10px;padding:14px;text-align:center;font-size:15px;font-weight:700;color:#065f46;letter-spacing:1px}
+.mystery-section{padding:2px 14px 14px}
+.slabel{font-size:9.5px;letter-spacing:3px;font-weight:800;text-transform:uppercase;color:#64748b;text-align:center;padding-bottom:8px}
+.mystery-row{display:flex;justify-content:center;gap:4px}
+.my-col{text-align:center}
+.my-box{width:30px;height:30px;border:2px solid #0f172a;background:#FFE500;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#111}
+.my-num{font-size:8px;color:#94a3b8;margin-top:2px}
+.ctrl{display:flex;justify-content:center;gap:8px;padding:0 14px 14px;flex-wrap:wrap}
+.btn{padding:8px 18px;border:none;border-radius:8px;font-size:11px;letter-spacing:1.5px;font-weight:700;cursor:pointer;touch-action:manipulation}
+.btn-v{background:#fbbf24;color:#0f172a}
+.btn-e{background:#0f172a;color:#fff}
+.clues-section{padding:0 14px 20px;max-width:500px;margin:0 auto}
+.clues-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grp-title{font-size:9.5px;letter-spacing:2px;font-weight:800;border-bottom:2px solid #0f172a;padding-bottom:4px;margin-bottom:8px;color:#0f172a}
+.ce{font-size:12px;line-height:1.5;padding:3px 5px;margin-bottom:4px;border-radius:4px;cursor:pointer;border-left:3px solid transparent;transition:background .1s;color:#374151}
+.ce:hover{background:#e2e8f0}
+.ce.ah{background:#fef9c3;border-left-color:#fbbf24}
+.ce.av{background:#dbeafe;border-left-color:#2563eb}
+.vkb{position:fixed;bottom:0;left:0;right:0;z-index:100;background:#d1d9e0;border-top:1px solid #b0bac3;padding:7px 4px env(safe-area-inset-bottom,8px)}
+.kb-row{display:flex;justify-content:center;gap:4px;margin-bottom:5px}
+.kb-row:last-child{margin-bottom:0}
+.k{height:44px;background:#fff;border:none;border-bottom:3px solid #8a94a0;border-radius:5px;font-size:15px;font-weight:600;color:#0f172a;cursor:pointer;flex:1;max-width:34px;min-width:22px;display:flex;align-items:center;justify-content:center;user-select:none}
+.k:active{transform:translateY(2px);border-bottom-width:1px}
+.k.spec{background:#adb5bd;color:#0f172a;max-width:52px;font-size:13px;border-bottom-color:#6c757d}
+.k.dir{background:#2563eb;color:#fff;max-width:52px;font-size:16px;border-bottom-color:#1d4ed8}
+.k.dir.off{background:#93c5fd;border-bottom-color:#60a5fa}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Mots Croisés</h1>
-  <p>Trouve le mot mystère ✦</p>
+<header class="hdr">
+  <div class="hdr-title">MOTS CROISÉS</div>
+  <div class="clue-bar" id="clue-bar">
+    <span class="cph">Appuyez sur une case pour commencer</span>
+  </div>
 </header>
 
-<div class="tabs">
-  <div class="tab active" data-tab="grid">Grille</div>
-  <div class="tab" data-tab="mystery">Mot mystère</div>
+<div class="grid-area"><div class="cw-grid" id="grid"></div></div>
+
+<div id="success">🌿 Bravo ! Le mot mystère est BRIMBELLE ! 🌿</div>
+
+<div class="mystery-section">
+  <div class="slabel">Mot Mystère</div>
+  <div class="mystery-row" id="mrow"></div>
 </div>
 
-<!-- GRID -->
-<div class="panel active" id="panel-grid">
-  <div class="progress-wrap"><div class="progress-bar" id="progress"></div></div>
-  <div class="progress-label" id="progress-label">0 / 0 lettres</div>
-  <div class="grid-scroll">
-    <div class="grid-area" id="grid-area"></div>
-  </div>
-  <div class="btn-row">
-    <button class="btn btn-primary" onclick="verifyAll()">Vérifier</button>
-    <button class="btn btn-outline" onclick="revealAll()">Révéler</button>
-    <button class="btn btn-outline" onclick="clearAll()">Effacer</button>
-  </div>
-  <div class="success-banner" id="success">🎉 Bravo ! Grille complétée !</div>
+<div class="ctrl">
+  <button class="btn btn-v" onclick="verifyAll()">VÉRIFIER</button>
+  <button class="btn btn-e" onclick="clearAll()">EFFACER TOUT</button>
 </div>
 
-<!-- MYSTERY -->
-<div class="panel" id="panel-mystery">
-  <div class="mystery-section">
-    <h3>✦ Mot Mystère</h3>
-    <p style="text-align:center;font-size:.82rem;color:var(--ink-light);margin-bottom:14px;">
-      Les cases dorées révèlent le mot mystère
-    </p>
-    <div class="mystery-cells" id="mystery-cells"></div>
+<div class="clues-section">
+  <div class="clues-cols">
+    <div><div class="grp-title">→ Horizontal</div><div id="clues-h"></div></div>
+    <div><div class="grp-title">↓ Vertical</div><div id="clues-v"></div></div>
   </div>
 </div>
 
-<!-- KEYBOARD -->
-<div class="keyboard" id="keyboard">
-  <div class="kb-row">
-    <button class="kb-key" onclick="kbType('A')">A</button>
-    <button class="kb-key" onclick="kbType('Z')">Z</button>
-    <button class="kb-key" onclick="kbType('E')">E</button>
-    <button class="kb-key" onclick="kbType('R')">R</button>
-    <button class="kb-key" onclick="kbType('T')">T</button>
-    <button class="kb-key" onclick="kbType('Y')">Y</button>
-    <button class="kb-key" onclick="kbType('U')">U</button>
-    <button class="kb-key" onclick="kbType('I')">I</button>
-    <button class="kb-key" onclick="kbType('O')">O</button>
-    <button class="kb-key" onclick="kbType('P')">P</button>
-  </div>
-  <div class="kb-row">
-    <button class="kb-key" onclick="kbType('Q')">Q</button>
-    <button class="kb-key" onclick="kbType('S')">S</button>
-    <button class="kb-key" onclick="kbType('D')">D</button>
-    <button class="kb-key" onclick="kbType('F')">F</button>
-    <button class="kb-key" onclick="kbType('G')">G</button>
-    <button class="kb-key" onclick="kbType('H')">H</button>
-    <button class="kb-key" onclick="kbType('J')">J</button>
-    <button class="kb-key" onclick="kbType('K')">K</button>
-    <button class="kb-key" onclick="kbType('L')">L</button>
-    <button class="kb-key" onclick="kbType('M')">M</button>
-  </div>
-  <div class="kb-row">
-    <button class="kb-key special" onclick="moveToPrev()">◀ Préc</button>
-    <button class="kb-key" onclick="kbType('W')">W</button>
-    <button class="kb-key" onclick="kbType('X')">X</button>
-    <button class="kb-key" onclick="kbType('C')">C</button>
-    <button class="kb-key" onclick="kbType('V')">V</button>
-    <button class="kb-key" onclick="kbType('B')">B</button>
-    <button class="kb-key" onclick="kbType('N')">N</button>
-    <button class="kb-key special" onclick="kbBackspace()">⌫</button>
-    <button class="kb-key special close-kb" onclick="closeKeyboard()">✕</button>
-  </div>
+<div class="vkb">
+  <div class="kb-row" id="kb0"></div>
+  <div class="kb-row" id="kb1"></div>
+  <div class="kb-row" id="kb2"></div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  GRID DATA  (corrected layout from user)
-// ═══════════════════════════════════════════════════════
-const cellData = [
-  // Mot 1 (Horizontal, 8 lettres)
-  {x:0,y:3,num:1,yellow:true, mysteryId:1},{x:1,y:3},{x:2,y:3},{x:3,y:3},{x:4,y:3},{x:5,y:3},{x:6,y:3},{x:7,y:3},
-  // Mot 2 (Vertical, 5 lettres)
-  {x:5,y:2,num:2,yellow:true, mysteryId:2},{x:5,y:3},{x:5,y:4},{x:5,y:5},{x:5,y:6}, {x:5,y:7},
-  // Mot 3 (Horizontal, 5 lettres)
-  {x:9,y:5,num:3},{x:10,y:5},{x:11,y:5},{x:12,y:5,yellow:true,mysteryId:3},{x:13,y:5},
-  // Mot 4 (Horizontal, 5 lettres)
-  {x:1,y:9,num:4},{x:2,y:9},{x:3,y:9},{x:4,y:9,yellow:true,mysteryId:4},{x:5,y:9},
-  // Mot 5 (Vertical, 7 lettres)
-  {x:1,y:5,num:5,yellow:true,mysteryId:5},{x:1,y:6},{x:1,y:7},{x:1,y:8},{x:1,y:9},{x:1,y:10},{x:1,y:11},{x:1,y:12},
-  // Mot 6 (Vertical, 7 lettres — length from data: y:2..y:8)
-  {x:3,y:2,num:6},{x:3,y:3},{x:3,y:4},{x:3,y:5},{x:3,y:6},{x:3,y:7,yellow:true,mysteryId:6},{x:3,y:8},{x:3,y:9},
-  // Mot 7 (Vertical, 4 lettres)
-  {x:7,y:0,num:7,yellow:true,mysteryId:7},{x:7,y:1},{x:7,y:2},{x:7,y:3},
-  // Mot 8 (Vertical, 3 lettres)
-  {x:10,y:4,num:8,yellow:true,mysteryId:8},{x:10,y:5},{x:10,y:6}, {x:10,y:7},
-  // Mot 9 (Horizontal, 6 lettres)
-  {x:5,y:7,num:9,yellow:true,mysteryId:9},{x:6,y:7},{x:7,y:7},{x:8,y:7},{x:9,y:7},{x:10,y:7},
+/* ── CONFIGURATION ── */
+const WORDS = [
+  {id:1,dir:'h',r:3, c:0, len:8,yr:3,yc:0, mp:1,ans:'BOULEAUX'},
+  {id:2,dir:'v',r:2, c:5, len:6,yr:2,yc:5, mp:2,ans:'RACINE'  },
+  {id:3,dir:'h',r:5, c:9, len:5,yr:5,yc:12,mp:3,ans:'SAPIN'   },
+  {id:4,dir:'h',r:9, c:1, len:5,yr:9,yc:4, mp:4,ans:'GRUME'   },
+  {id:5,dir:'v',r:5, c:1, len:8,yr:5,yc:1, mp:5,ans:'BOURGEON'},
+  {id:6,dir:'v',r:2, c:3, len:8,yr:7,yc:3, mp:6,ans:'BLAIREAU'},
+  {id:7,dir:'v',r:0, c:7, len:4,yr:0,yc:7, mp:7,ans:'LYNX'    },
+  {id:8,dir:'v',r:4, c:10,len:4,yr:4,yc:10,mp:8,ans:'LAIE'    },
+  {id:9,dir:'h',r:7, c:5, len:6,yr:7,yc:5, mp:9,ans:'ECORCE'  },
 ];
 
-// ── Word membership: detect words from consecutive cells ──
-// We'll derive word cell lists from the data
-const words = [
-  {id:1, dir:'h', cells: cellData.slice(0,8).map(c=>key(c.x,c.y))},
-  {id:2, dir:'v', cells: [key(5,2),key(5,3),key(5,4),key(5,5),key(5,6),key(5,7)]},
-  {id:3, dir:'h', cells: [key(9,5),key(10,5),key(11,5),key(12,5),key(13,5)]},
-  {id:4, dir:'h', cells: [key(1,9),key(2,9),key(3,9),key(4,9),key(5,9)]},
-  {id:5, dir:'v', cells: [key(1,5),key(1,6),key(1,7),key(1,8),key(1,9),key(1,10),key(1,11),key(1,12)]},
-  {id:6, dir:'v', cells: [key(3,2),key(3,3),key(3,4),key(3,5),key(3,6),key(3,7),key(3,8),key(3,9)]},
-  {id:7, dir:'v', cells: [key(7,0),key(7,1),key(7,2),key(7,3)]},
-  {id:8, dir:'v', cells: [key(10,4),key(10,5),key(10,6),key(10,7)]},
-  {id:9, dir:'h', cells: [key(5,7),key(6,7),key(7,7),key(8,7),key(9,7),key(10,7)]},
-];
+const CLUES = {
+  h:{1:"Définition à venir…",3:"Définition à venir…",4:"Définition à venir…",9:"Définition à venir…"},
+  v:{2:"Définition à venir…",5:"Définition à venir…",6:"Définition à venir…",7:"Définition à venir…",8:"Définition à venir…"}
+};
 
-// ── State ──
-let cells = {};
-let activeCell = null;
-let activeDir  = 'h';
-let activeWordCells = [];
+/* Build answers + cell map */
+const ANS={}, CM={};
+const GR=13, GC=14;
 
-function key(x,y){ return `${x},${y}`; }
-
-// ── Build lookup ──
-cellData.forEach(cd => {
-  const k = key(cd.x, cd.y);
-  if (!cells[k]) {
-    cells[k] = {
-      x: cd.x, y: cd.y,
-      gold: !!cd.yellow,
-      mysteryId: cd.mysteryId || null,
-      num: cd.num || null,
-      wordMembership: [],
-      el: null, inp: null
-    };
-  } else {
-    // merge
-    if (cd.yellow) cells[k].gold = true;
-    if (cd.mysteryId) cells[k].mysteryId = cd.mysteryId;
-    if (cd.num) cells[k].num = cd.num;
+WORDS.forEach(w=>{
+  for(let i=0;i<w.len;i++){
+    const r=w.dir==='v'?w.r+i:w.r, c=w.dir==='h'?w.c+i:w.c, k=`${r},${c}`;
+    ANS[k]=w.ans[i];
+    if(!CM[k]) CM[k]={r,c,entries:[],num:null,yellow:false,mp:null};
+    CM[k].entries.push({wid:w.id,dir:w.dir,idx:i});
+    if(i===0) CM[k].num=w.id;
+    if(r===w.yr&&c===w.yc){CM[k].yellow=true;CM[k].mp=w.mp;}
   }
 });
-words.forEach(w => {
-  w.cells.forEach(k => {
-    if (cells[k]) cells[k].wordMembership.push(w.id);
+
+/* State */
+let LT={}, VER={}, SK=null, SD='h';
+
+/* Render grid */
+const gridEl=document.getElementById('grid');
+gridEl.style.gridTemplateColumns=`repeat(${GC},36px)`;
+gridEl.style.gridTemplateRows=`repeat(${GR},36px)`;
+const EL={};
+for(let r=0;r<GR;r++){
+  for(let c=0;c<GC;c++){
+    const k=`${r},${c}`,cd=CM[k],el=document.createElement('div');
+    el.className='gc'+(cd?' on':'');
+    if(cd){
+      if(cd.num){const nl=document.createElement('span');nl.className='nl';nl.textContent=cd.num;el.appendChild(nl);}
+      const lt=document.createElement('span');lt.className='lt';el.appendChild(lt);
+      el.addEventListener('click',()=>tapCell(k));
+    }
+    EL[k]=el; gridEl.appendChild(el);
+  }
+}
+
+/* Render mystery */
+const mrow=document.getElementById('mrow');
+for(let i=1;i<=9;i++){
+  const col=document.createElement('div');
+  col.className='my-col';
+  col.innerHTML=`<div class="my-box" id="my-${i}"></div><div class="my-num">${i}</div>`;
+  mrow.appendChild(col);
+}
+
+/* Render clues */
+['h','v'].forEach(dir=>{
+  const cont=document.getElementById(`clues-${dir}`);
+  Object.entries(CLUES[dir]).sort(([a],[b])=>+a-+b).forEach(([id,txt])=>{
+    const el=document.createElement('div');
+    el.className='ce'; el.id=`ce-${dir}-${id}`;
+    el.innerHTML=`<strong>${id}.</strong> ${txt}`;
+    el.addEventListener('click',()=>jumpWord(+id,dir));
+    cont.appendChild(el);
   });
 });
 
-// ── Render grid ──
-function initGrid() {
-  const S = 38, G = 3, step = S + G;
-  const xs = Object.values(cells).map(c=>c.x);
-  const ys = Object.values(cells).map(c=>c.y);
-  const minX = Math.min(...xs), minY = Math.min(...ys);
-  const maxX = Math.max(...xs), maxY = Math.max(...ys);
-
-  const area = document.getElementById('grid-area');
-  area.style.width  = ((maxX-minX+1)*step)+'px';
-  area.style.height = ((maxY-minY+1)*step)+'px';
-
-  Object.entries(cells).forEach(([k, cd]) => {
-    const el = document.createElement('div');
-    el.className = 'cell' + (cd.gold ? ' gold' : '');
-    el.style.left = ((cd.x-minX)*step)+'px';
-    el.style.top  = ((cd.y-minY)*step)+'px';
-
-    if (cd.num) {
-      const n = document.createElement('span');
-      n.className = 'cell-number';
-      n.textContent = cd.num;
-      el.appendChild(n);
-    }
-
-    const inp = document.createElement('input');
-    inp.type='text'; inp.maxLength=1;
-    inp.inputMode='none';
-    inp.autocomplete='off'; inp.autocorrect='off'; inp.spellcheck=false;
-    el.appendChild(inp);
-    area.appendChild(el);
-
-    cd.el = el; cd.inp = inp;
-    el.addEventListener('pointerdown', e => { e.preventDefault(); activateCell(k); });
-    inp.addEventListener('keydown', onKeyDown);
-  });
-
-  updateProgress();
+/* Helpers */
+function getW(id){return WORDS.find(w=>w.id===id);}
+function wKeys(w){
+  const ks=[];
+  for(let i=0;i<w.len;i++){
+    const r=w.dir==='v'?w.r+i:w.r,c=w.dir==='h'?w.c+i:w.c;
+    ks.push(`${r},${c}`);
+  }
+  return ks;
+}
+function activeW(){
+  if(!SK) return null;
+  const cd=CM[SK]; if(!cd) return null;
+  let e=cd.entries.find(x=>x.dir===SD);
+  if(!e){e=cd.entries[0];if(e) SD=e.dir;}
+  return e?getW(e.wid):null;
 }
 
-// ── Activation & highlight ──
-function activateCell(k) {
-  if (!cells[k]) return;
+/* Actions */
+function tapCell(k){
+  const cd=CM[k]; if(!cd) return;
+  const dirs=[...new Set(cd.entries.map(e=>e.dir))];
+  if(SK===k&&dirs.length>1) SD=SD==='h'?'v':'h';
+  else{SK=k;if(!dirs.includes(SD)) SD=dirs[0];}
+  redraw();
+}
 
-  // Clear old
-  if (activeCell) cells[activeCell].el.classList.remove('active-cell');
-  activeWordCells.forEach(ck => cells[ck]?.el.classList.remove('highlighted'));
+function typeKey(ch){
+  if(!SK) return;
+  LT[SK]=ch; delete VER[SK];
+  EL[SK].querySelector('.lt').textContent=ch;
+  updateMystery(); advance(1);
+}
 
-  activeCell = k;
-  const cd = cells[k];
+function backspace(){
+  if(!SK) return;
+  if(LT[SK]){
+    delete LT[SK]; delete VER[SK];
+    EL[SK].querySelector('.lt').textContent='';
+    updateMystery();
+  } else advance(-1);
+}
 
-  // Pick direction
-  const wm = cd.wordMembership;
-  if (wm.length === 0) return;
+function advance(d){
+  const aw=activeW(); if(!aw) return;
+  const e=CM[SK].entries.find(x=>x.dir===SD); if(!e) return;
+  const ni=e.idx+d; if(ni<0||ni>=aw.len) return;
+  const r=aw.dir==='v'?aw.r+ni:aw.r,c=aw.dir==='h'?aw.c+ni:aw.c;
+  SK=`${r},${c}`; redraw();
+}
 
-  // Find which word dirs are available
-  const availDirs = wm.map(wid => words.find(w=>w.id===wid).dir);
-  if (!availDirs.includes(activeDir)) activeDir = availDirs[0];
+function toggleDir(){
+  if(!SK) return;
+  const cd=CM[SK]; if(!cd) return;
+  const dirs=[...new Set(cd.entries.map(e=>e.dir))];
+  if(dirs.length>1){SD=SD==='h'?'v':'h';redraw();}
+}
 
-  // If same cell tapped again, toggle direction
-  const w = words.find(w => w.cells.includes(k) && w.dir === activeDir)
-          || words.find(w => w.cells.includes(k));
-  activeDir = w.dir;
+function jumpWord(id,dir){
+  const w=WORDS.find(x=>x.id===id&&x.dir===dir); if(!w) return;
+  SK=`${w.r},${w.c}`; SD=dir; redraw();
+  gridEl.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 
-  activeWordCells = w.cells;
-  activeWordCells.forEach(ck => { if(ck!==k) cells[ck]?.el.classList.add('highlighted'); });
+function verifyAll(){
+  VER={};
+  let allOk=true;
+  Object.keys(CM).forEach(k=>{
+    const entered=LT[k]||'', expected=ANS[k];
+    if(!entered){allOk=false;}
+    else if(entered===expected){VER[k]='ok';}
+    else{VER[k]='ko'; allOk=false;}
+  });
+  document.getElementById('success').style.display=allOk?'block':'none';
+  redraw();
+}
 
-  cd.el.classList.add('active-cell');
-  cd.inp.focus({preventScroll:true});
-  showKeyboard();
+function clearAll(){
+  LT={}; VER={}; SK=null;
+  Object.keys(CM).forEach(k=>{const lt=EL[k]?.querySelector('.lt');if(lt) lt.textContent='';});
   updateMystery();
-}
-
-// ── Toggle dir on double tap same cell ──
-let lastTapped = null;
-document.getElementById('grid-area').addEventListener('pointerdown', e => {
-  const el = e.target.closest('.cell');
-  if (!el) return;
-  // find key
-  const k = Object.keys(cells).find(k2 => cells[k2].el === el);
-  if (!k) return;
-  if (k === activeCell) {
-    // Toggle
-    const wm = cells[k].wordMembership;
-    if (wm.length > 1) {
-      const curW = words.find(w=>w.cells.includes(k)&&w.dir===activeDir);
-      const otherW = words.find(w=>w.cells.includes(k)&&w.dir!==activeDir);
-      if (otherW) { activeDir = otherW.dir; activateCell(k); }
-    }
-  }
-}, {capture:true});
-
-// ── Keyboard ──
-function kbType(letter) {
-  if (!activeCell) return;
-  cells[activeCell].inp.value = letter;
-  cells[activeCell].el.classList.remove('correct','wrong');
-  updateProgress(); updateMystery();
-  moveToNext();
-}
-function kbBackspace() {
-  if (!activeCell) return;
-  if (cells[activeCell].inp.value) {
-    cells[activeCell].inp.value = '';
-    cells[activeCell].el.classList.remove('correct','wrong');
-    updateProgress(); updateMystery();
-  } else { moveToPrev(); }
-}
-function moveToNext() {
-  const idx = activeWordCells.indexOf(activeCell);
-  if (idx < activeWordCells.length-1) activateCell(activeWordCells[idx+1]);
-}
-function moveToPrev() {
-  const idx = activeWordCells.indexOf(activeCell);
-  if (idx > 0) activateCell(activeWordCells[idx-1]);
-}
-function onKeyDown(e) {
-  if (e.key==='Tab')           { e.preventDefault(); toggleDir(); return; }
-  if (e.key==='ArrowRight'||e.key==='ArrowDown') { e.preventDefault(); moveToNext(); }
-  if (e.key==='ArrowLeft' ||e.key==='ArrowUp')   { e.preventDefault(); moveToPrev(); }
-  if (e.key==='Backspace')     { e.preventDefault(); kbBackspace(); }
-  if (e.key.length===1 && /[a-zA-ZÀ-ÿ]/.test(e.key)) { e.preventDefault(); kbType(e.key.toUpperCase()); }
-}
-function toggleDir() {
-  if (!activeCell) return;
-  const wm = cells[activeCell].wordMembership;
-  if (wm.length<2) return;
-  activeDir = activeDir==='h'?'v':'h';
-  activateCell(activeCell);
-}
-function showKeyboard() {
-  document.getElementById('keyboard').classList.add('visible');
-  document.body.classList.add('kb-open');
-}
-function closeKeyboard() {
-  document.getElementById('keyboard').classList.remove('visible');
-  document.body.classList.remove('kb-open');
-  if (activeCell) {
-    cells[activeCell].el.classList.remove('active-cell');
-    activeWordCells.forEach(ck => cells[ck]?.el.classList.remove('highlighted'));
-    activeCell = null;
-  }
-}
-
-// ── Verify / Reveal / Clear (no answers stored → just highlight completion) ──
-function verifyAll() {
-  // Without answer data, just mark filled cells and check grid completeness
-  let allFilled = true;
-  Object.values(cells).forEach(cd => {
-    if (!cd.inp.value) allFilled = false;
-  });
-  if (allFilled) document.getElementById('success').style.display='block';
-}
-function revealAll() { /* answers not provided — no-op */ }
-function clearAll() {
-  Object.values(cells).forEach(cd => {
-    cd.inp.value = '';
-    cd.el.classList.remove('correct','wrong');
-  });
   document.getElementById('success').style.display='none';
-  updateProgress(); updateMystery();
+  redraw();
 }
 
-// ── Progress ──
-function updateProgress() {
-  const total  = Object.keys(cells).length;
-  const filled = Object.values(cells).filter(c=>c.inp.value).length;
-  const pct = total>0 ? Math.round(filled/total*100) : 0;
-  document.getElementById('progress').style.width = pct+'%';
-  document.getElementById('progress-label').textContent = `${filled} / ${total} lettres`;
+function updateMystery(){
+  WORDS.forEach(w=>{
+    const el=document.getElementById(`my-${w.mp}`);
+    if(el) el.textContent=LT[`${w.yr},${w.yc}`]||'';
+  });
 }
 
-// ── Mystery word ──
-const MYSTERY_COUNT = 9;
-function buildMysteryUI() {
-  const cont = document.getElementById('mystery-cells');
-  for (let i=1; i<=MYSTERY_COUNT; i++) {
-    const div = document.createElement('div');
-    div.className = 'mystery-cell';
-    const letter = document.createElement('div');
-    letter.className = 'mystery-letter';
-    letter.id = `ml-${i}`;
-    const num = document.createElement('div');
-    num.className = 'mystery-num';
-    num.textContent = i;
-    div.appendChild(letter); div.appendChild(num);
-    cont.appendChild(div);
+/* Redraw */
+function redraw(){
+  const aw=activeW(), wkSet=new Set(aw?wKeys(aw):[]);
+  Object.keys(CM).forEach(k=>{
+    const cd=CM[k],el=EL[k]; if(!el||!cd) return;
+    el.classList.remove('yi','hi','yhi','ok','ko','sel');
+    const isSel=k===SK,isHi=wkSet.has(k),isYel=cd.yellow,ver=VER[k];
+    if(isSel)          el.classList.add('sel');
+    else if(ver==='ok') el.classList.add('ok');
+    else if(ver==='ko') el.classList.add('ko');
+    else if(isHi&&isYel) el.classList.add('yhi');
+    else if(isHi)       el.classList.add('hi');
+    else if(isYel)      el.classList.add('yi');
+  });
+  const bar=document.getElementById('clue-bar');
+  if(aw){
+    const clue=CLUES[aw.dir]?.[aw.id]||'…';
+    bar.innerHTML=`<span class="cbadge">${aw.id} ${aw.dir==='h'?'→':'↓'}</span><span class="ctxt">${clue}</span>`;
+  } else {
+    bar.innerHTML='<span class="cph">Appuyez sur une case pour commencer</span>';
   }
-}
-function updateMystery() {
-  for (let i=1; i<=MYSTERY_COUNT; i++) {
-    const el = document.getElementById(`ml-${i}`);
-    if (!el) continue;
-    const cd = Object.values(cells).find(c=>c.mysteryId===i);
-    el.textContent = cd ? (cd.inp.value||'') : '';
-  }
+  document.querySelectorAll('.ce').forEach(el=>el.classList.remove('ah','av'));
+  if(aw){const ce=document.getElementById(`ce-${aw.dir}-${aw.id}`);if(ce) ce.classList.add(aw.dir==='h'?'ah':'av');}
+  const cd=SK?CM[SK]:null;
+  const canToggle=cd&&[...new Set(cd.entries.map(e=>e.dir))].length>1;
+  const dirBtn=document.getElementById('dir-btn');
+  if(dirBtn){dirBtn.textContent=SD==='h'?'→':'↓';dirBtn.classList.toggle('off',!canToggle);}
 }
 
-// ── Tabs ──
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active', x===t));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id===`panel-${t.dataset.tab}`));
+/* Keyboard */
+const KB=[
+  ['A','Z','E','R','T','Y','U','I','O','P'],
+  ['Q','S','D','F','G','H','J','K','L','M'],
+  ['W','X','C','V','B','N','⌫','DIR'],
+];
+KB.forEach((row,ri)=>{
+  const rowEl=document.getElementById(`kb${ri}`);
+  row.forEach(key=>{
+    const btn=document.createElement('button');
+    btn.className='k';
+    if(key==='⌫'){
+      btn.classList.add('spec');btn.textContent='⌫';
+      btn.addEventListener('click',backspace);
+    } else if(key==='DIR'){
+      btn.classList.add('dir');btn.id='dir-btn';btn.textContent='→';
+      btn.addEventListener('click',toggleDir);
+    } else {
+      btn.textContent=key;
+      btn.addEventListener('click',()=>typeKey(key));
+    }
+    rowEl.appendChild(btn);
   });
 });
 
-// ── Init ──
-initGrid();
-buildMysteryUI();
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(e.key.length===1&&/[a-zA-ZÀ-ÿ]/.test(e.key)){
+    typeKey(e.key.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+    e.preventDefault();
+  } else if(e.key==='Backspace'){backspace();e.preventDefault();}
+});
+
 updateMystery();
+redraw();
 </script>
 </body>
 </html>
